@@ -1,5 +1,7 @@
 from pygame.math import Vector2
-from model import Unit,Bullet
+from model import Unit,Bullet,Level
+import json
+import os
 
 class Command():
     def run(self):
@@ -38,7 +40,7 @@ class MoveCommand(Command):
             return
 
         # Don't allow wall positions
-        if not self.state.walls[int(newPos.y)][int(newPos.x)] is None:
+        if not self.state.level.walls[int(newPos.y)][int(newPos.x)] is None:
             return
 
         # Don't allow other unit positions 
@@ -66,7 +68,7 @@ class ShootCommand(Command):
         if self.state.epoch-self.unit.lastBulletEpoch < self.state.bulletDelay:
             return
         self.unit.lastBulletEpoch = self.state.epoch
-        self.state.bullets.append(Bullet(self.state,self.unit))
+        self.state.bullets.append(Bullet(self.unit))
         
 class MoveBulletCommand(Command):
     def __init__(self,state,bullet):
@@ -107,3 +109,74 @@ class DeleteDestroyedCommand(Command)       :
     def run(self):
         newList = [ item for item in self.itemList if item.status == "alive" ]
         self.itemList[:] = newList
+
+
+class LoadLevelCommand(Command)       :
+    def __init__(self,state,fileName):
+        self.state = state
+        self.fileName = fileName
+        
+    def decodeArrayLayer(self,arrayLayer):
+        """
+        Create an array from a array layer json object
+        """        
+        array = []
+        
+        for y in range(len(arrayLayer)):
+            row = arrayLayer[y]
+            temp = []
+            for x in range(len(row)):
+                cell= row[x]
+                if cell is None:
+                    temp.append(None)
+                else:
+                    temp.append(Vector2(cell[0],cell[1]))
+            array.append(temp)
+        return array
+    
+    def decodeUnitsLayer(self,state,unitLayer):
+        array = []
+        for unit in unitLayer:
+            position = Vector2(unit['position'][0],unit['position'][1])
+            direction = Vector2(unit['direction'][0],unit['direction'][1])
+            array.append(Unit(position,direction))
+        return array
+
+        
+        
+    def run(self):
+        # Load map
+        if not os.path.exists(self.fileName):
+            raise RuntimeError("No file {}".format(self.fileName))
+
+
+        with open(self.fileName, 'r') as json_file:
+            data = json.load(json_file)
+        
+        
+        state = self.state
+        state.worldSize = Vector2(data['width'],data['height']) # level 1 World size: [16, 10] level2 World size: [19, 11]
+
+        # Create level
+        level=state.level
+        # Ground layer
+        level.ground[:] = self.decodeArrayLayer(data['ground'])
+        cellSize = Vector2( data['CellSize'][0],data['CellSize'][1]) #Cell size: [64, 64]
+        level.cellSize = cellSize
+        
+
+        # Walls layer
+        level.walls[:] = self.decodeArrayLayer(data['walls'])
+        
+
+        # Units layer
+        level.units[:] = self.decodeUnitsLayer(state,data['units'])
+
+        level.gameOver = False
+        
+        
+        # Explosions layers
+        state.bullets.clear()
+        
+        
+        

@@ -9,6 +9,10 @@ class Layer(GameStateObserver):
         self.cellSize = cellSize
         self.texture = pygame.image.load(imageFile)
         
+    def setTileset(self,cellSize,imageFile):
+        self.cellSize = cellSize
+        self.texture = pygame.image.load(imageFile)
+
     @property
     def cellWidth(self):
         return int(self.cellSize.x)
@@ -53,6 +57,10 @@ class ArrayLayer(Layer):
         self.array = array
         self.surface = None
         self.surfaceFlags = surfaceFlags
+    
+    def setTileset(self,cellSize,imageFile):
+        super().setTileset(cellSize,imageFile)
+        self.surface = None
         
     def render(self,surface):
         if self.surface is None:
