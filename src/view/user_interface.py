@@ -39,8 +39,7 @@ class UserInterface():
             ExplosionsLayer(self.gameState.level.cellSize,"assets/explosions.png"),
         ]   
 
-        for layer in self.layers:
-            self.gameState.addObserver(layer)
+     
         
         # Loop properties
         self.clock = pygame.time.Clock()
@@ -82,17 +81,11 @@ class UserInterface():
         self.window.blit(surface, (x, y))
 
     def renderLevel(self):
+        print("rendering level")
+        print(self.layers[0].array)
         for layer in self.layers:
             layer.render(self.window)
 
-    def updateLayers(self):
-        self.layers = [
-            ArrayLayer(self.gameState.level.cellSize,"assets/ground.png",self.gameState,self.gameState.level.ground,0),
-            ArrayLayer(self.gameState.level.cellSize,"assets/walls.png",self.gameState,self.gameState.level.walls),
-            UnitsLayer(self.gameState.level.cellSize,"assets/units.png",self.gameState,self.gameState.level.units),
-            BulletsLayer(self.gameState.level.cellSize,"assets/explosions.png",self.gameState,self.gameState.bullets),
-            ExplosionsLayer(self.gameState.level.cellSize,"assets/explosions.png"),
-        ]   
 
     def run(self):
         state = self.gameState
@@ -101,12 +94,10 @@ class UserInterface():
         while state.running:
             # Inputs and updates are exclusives
             if state.currentActiveMode == 'Overlay':
-                controller.processInputMenu()
+                controller.processInputMenu(self.layers )
             elif state.currentActiveMode == 'Play':
                 try:
-                    
                     controller.processInputLevel()
-                    controller.update()
                 except Exception as ex:
                     print(ex)
                     darkSurface = pygame.Surface(window.get_size(),flags=pygame.SRCALPHA)

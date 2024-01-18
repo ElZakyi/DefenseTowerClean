@@ -2,6 +2,7 @@ from model import GameState
 import pygame
 from pygame.math import Vector2
 from .command import MoveCommand,TargetCommand,ShootCommand,MoveBulletCommand,DeleteDestroyedCommand,LoadLevelCommand
+from view import ArrayLayer,UnitsLayer,BulletsLayer,ExplosionsLayer
 class GameController():
     
     def __init__(self):
@@ -31,17 +32,16 @@ class GameController():
     
 
     def gameWon(self):
-        self.showMessage("Felicitation You Won !")
+        self.showMessage("Victory !")
  
     
     def gameLost(self):
-        self.showMessage("Game Over")
+        self.showMessage("GAME OVER")
 
     def loadLevelRequested(self, fileName):
         state = self.gameState
-        self.commands.append(LoadLevelCommand(state,fileName))
+        LoadLevelCommand(state,fileName).run()
         try:
-            self.update()
             state.currentActiveMode = 'Play'
         except Exception as ex:
             print(ex)
@@ -66,27 +66,18 @@ class GameController():
     def quitRequested(self):
         self.gameState.running = False
 
-    def resetMenu(self):
-        self.gameState.menu.menuItems = [
-            {
-                'title': 'Level 1',
-                'action': lambda: self.loadLevelRequested("levels/level1.json")
-            },
-            {
-                'title': 'Level 2',
-                'action': lambda: self.loadLevelRequested("levels/level2.json")
-            },
-            {
-                'title': 'Level 3',
-                'action': lambda: self.loadLevelRequested("levels/level3.json")
-            },
-            {
-                'title': 'Quit',
-                'action': lambda: self.quitRequested()
-            }
-        ]  
+    def updateLayers(self, layers):
+        state = self.gameState
+        layers[:] = [
+            ArrayLayer(self.gameState.level.cellSize,"assets/ground.png",self.gameState,self.gameState.level.ground,0),
+            ArrayLayer(self.gameState.level.cellSize,"assets/walls.png",self.gameState,self.gameState.level.walls),
+            UnitsLayer(self.gameState.level.cellSize,"assets/units.png",self.gameState,self.gameState.level.units),
+            BulletsLayer(self.gameState.level.cellSize,"assets/explosions.png",self.gameState,self.gameState.bullets),
+            ExplosionsLayer(self.gameState.level.cellSize,"assets/explosions.png"),
+        ]   
 
-    def processInputMenu(self):
+
+    def processInputMenu(self, layers):
         menu=self.gameState.menu
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -105,6 +96,7 @@ class GameController():
                     menuItem = menu.menuItems[menu.currentMenuItem]
                     try:
                         menuItem['action']()
+                        self.updateLayers(layers)
                     except Exception as ex:
                         print(ex)
 
@@ -129,27 +121,36 @@ class GameController():
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 if event.type == pygame.QUIT:
+                    print("quit")
                     self.quitRequested()
                     break
                 elif event.key == pygame.K_ESCAPE:
+                    print("escape")
                     self.showMenuRequested()
                     break
                 elif event.key == pygame.K_RIGHT:
+                    print("right")
                     moveVector.x = 1
                 elif event.key == pygame.K_LEFT:
+                    print("left")
                     moveVector.x = -1
                 elif event.key == pygame.K_DOWN:
+                    print("down")
                     moveVector.y = 1
                 elif event.key == pygame.K_UP:
+                    print("up")
                     moveVector.y = -1
             elif event.type == pygame.MOUSEBUTTONDOWN:
+                print("mouse")
                 mouseClicked = True
 
         # If the game is over, all commands creations are disabled
+        print("gameOver",state.level.gameOver)
         if state.level.gameOver:
             return
                     
         # Keyboard controls the moves of the player's unit
+        print("moveVector",moveVector)
         if moveVector.x != 0 or moveVector.y != 0:
             self.commands.append(
                 MoveCommand(state,tank,moveVector)
@@ -190,6 +191,7 @@ class GameController():
         self.commands.append(
             DeleteDestroyedCommand(state.bullets)
         )
+        self.update()
                     
     def update(self):
         state = self.gameState
@@ -200,6 +202,7 @@ class GameController():
         state.epoch += 1
         
         # Check game over
+        print("tank.status",tank.status)
         if tank.status != "alive":
             state.level.gameOver = True
             self.gameLost()

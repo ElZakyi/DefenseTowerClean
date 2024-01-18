@@ -121,7 +121,7 @@ class LoadLevelCommand(Command)       :
         Create an array from a array layer json object
         """        
         array = []
-        
+        print(arrayLayer)
         for y in range(len(arrayLayer)):
             row = arrayLayer[y]
             temp = []
@@ -140,6 +140,8 @@ class LoadLevelCommand(Command)       :
             position = Vector2(unit['position'][0],unit['position'][1])
             direction = Vector2(unit['direction'][0],unit['direction'][1])
             array.append(Unit(position,direction))
+            print("unit",array[-1])
+    
         return array
 
         
@@ -153,12 +155,12 @@ class LoadLevelCommand(Command)       :
         with open(self.fileName, 'r') as json_file:
             data = json.load(json_file)
         
-        
+        print(data)
         state = self.state
         state.worldSize = Vector2(data['width'],data['height']) # level 1 World size: [16, 10] level2 World size: [19, 11]
 
         # Create level
-        level=state.level
+        level=Level(data['name'])
         # Ground layer
         level.ground[:] = self.decodeArrayLayer(data['ground'])
         cellSize = Vector2( data['CellSize'][0],data['CellSize'][1]) #Cell size: [64, 64]
@@ -173,6 +175,9 @@ class LoadLevelCommand(Command)       :
         level.units[:] = self.decodeUnitsLayer(state,data['units'])
 
         level.gameOver = False
+        state.level = level
+
+        print("Level loaded",level)
         
         
         # Explosions layers

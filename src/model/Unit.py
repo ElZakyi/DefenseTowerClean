@@ -7,3 +7,6 @@ class Unit(GameItem):
         super().__init__(position,tile)
         self.weaponTarget = Vector2(0,0)
         self.lastBulletEpoch = -100
+
+    def __str__(self):
+        return "Unit "+str(self.status) +str(self.position)+" "+str(self.tile)+" "+str(self.weaponTarget)+" "+str(self.lastBulletEpoch)

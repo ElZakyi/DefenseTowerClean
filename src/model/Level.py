@@ -21,5 +21,5 @@ class Level():
         return int(self.cellSize.y)
 
     def __str__(self):
-        return self.name
+        return self.name+" "+str(self.ground)+" "+str(self.walls)+" "+str(self.units)+" "+str(self.cellSize)+" "+str(self.gameOver)
     
